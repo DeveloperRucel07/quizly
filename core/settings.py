@@ -149,3 +149,16 @@ YDL_OPTS = {
     'quiet': True,
     'noplaylist': True,
 }
+
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+
+]
+
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+    "x-csrftoken",
+]
+

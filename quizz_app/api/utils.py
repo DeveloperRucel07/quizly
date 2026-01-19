@@ -5,6 +5,7 @@ import yt_dlp
 from django.conf import settings
 from core.settings import  YDL_OPTS
 from google import genai
+from google.genai import types
 from quizz_app.models import Question
 
 
@@ -90,7 +91,7 @@ def transcription_with_whisper(audio_file_path) :
 
     try:
         model = whisper.load_model('small')
-        result = model.transcribe(audio_file_path)
+        result = model.transcribe(audio_file_path, fp16=False)
 
         transcript_text = result.get('text', '').strip()
 
@@ -119,17 +120,15 @@ def generate_quizes_using_genmini_ai(transcript_text):
         safe_transcript = safe_transcript.replace('{', '{{').replace('}', '}}')
         response = gemini_client.models.generate_content(
             model='gemini-2.5-flash',
-            messages=[
-                {'author': 'system', 'content': 'You are a helpful assistant that generates structured quizzes.'},
-                {'author': 'user', 'content': get_prompt(safe_transcript)}
-            ]
+            config = types.GenerateContentConfig(
+                system_instruction='You are a helpful assistant that generates structured quizzes in JSON format.'),
+            contents =  get_prompt(safe_transcript)
         )
-        quiz_content = response.content.strip()
+        quiz_content = response.text.strip()
         check_content_formatting(quiz_content)
-        return {'success': True, 'quiz_content': quiz_content}
+        return {'success': True, 'quiz_content': check_content_formatting(quiz_content)}
     except Exception as e:
-        return {'title': 'AI error', 'description':f'Something when wrong during the quiz generation: {str(e)}', 'questions': []}
-    
+        return {'title': 'AI error', 'description':f'Something when wrong during the quiz generation: {str(e)}', 'questions': []}  
     
 def generate_quizzes_from_video(quiz):
     '''
@@ -161,10 +160,30 @@ def generate_quizzes_from_video(quiz):
         )
         question.save()
     return quiz
-    
 
-def summarize_text(text):
-    # Placeholder for text summarization logic
-    # In a real implementation, this could call an external API or use a local model
-    summary = text[:150] + '...' if len(text) > 150 else text
-    return summary
+def generate_quiz_from_youtube(video_url: str, quiz_id=None) -> dict:
+    '''
+    Full pipeline: YouTube → audio → transcript → Gemini quiz JSON
+    '''
+
+    download = download_audio_from_url(video_url, quiz_id)
+    if not download['success']:
+        return download
+    
+    print("Audio downloaded to:", download)
+
+    transcript_res = transcription_with_whisper(download['file_path'])
+    if not transcript_res['success']:
+        return transcript_res
+
+    quiz_res = generate_quizes_using_genmini_ai(transcript_res['transcript'])
+    quiz_data = quiz_res.get('quiz_content')
+    print(quiz_data)
+
+    return {
+        'success': True,
+        'quiz': quiz_data,
+        'audio_path': video_url,
+        'title': download['title'],
+    }
+

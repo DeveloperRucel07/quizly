@@ -9,6 +9,10 @@ class Quiz(models.Model):
     video_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Quiz'
+        verbose_name_plural = 'Quizzes'
 
     def __str__(self):
         return self.title
@@ -22,6 +26,10 @@ class Question(models.Model):
     answer = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Question'
+        verbose_name_plural = 'Questions'
     
     def __str__(self):
         return self.question_title
