@@ -108,12 +108,19 @@ The application will be available at `http://127.0.0.1:8000`
 ### Endpoints
 
 
-POST  `/api/register/`,  Create new Account 
-POST  `/api/login/`,  Login with User and Password (after login the user cookies are store in the browser)
-POST  `/api/logout/`,  logout user by deleting all cookies.
-POST  `/api/token/refresh/`,  refresh the access token for the user 
-POST  `/api/CreateQuiz/`,  Create a new quiz (only authenticated User)
-GET  `/api/quizzes/` ,List of Quizzes the current user created  (only authenticated User)
-GET  `/api/quizzes/<pk>/`,  Get quiz details  (only authenticated User and the user should be the owner of the quiz)
+- POST  `/api/register/`,  Create new Account
+
+- POST  `/api/login/`,  Login with User and Password (after login the user cookies are store in the browser)
+
+- POST  `/api/logout/`,  logout user by deleting all cookies.
+
+- POST  `/api/token/refresh/`,  refresh the access token for the user 
+
+- POST  `/api/CreateQuiz/`,  Create a new quiz (only authenticated User)
+
+- GET  `/api/quizzes/` ,List of Quizzes the current user created  (only authenticated User)
+
+- GET  `/api/quizzes/<pk>/`,  Get quiz details  (only authenticated User and the user should be the owner of the quiz)
+
 
 
