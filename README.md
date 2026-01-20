@@ -1,4 +1,4 @@
-## Project Description
+## Project Quizly
 
 Quizly is an intelligent quiz generation platform that leverages cutting-edge AI technology to transform YouTube videos into interactive learning experiences. The application automatically extracts audio from videos, transcribes content using advanced speech recognition, and generates comprehensive quizzes with 10 carefully crafted questions. This platform is perfect for educators, students, and learners who want to enhance their knowledge retention through interactive assessment tools.
 
@@ -84,16 +84,16 @@ GOOGLE_API_KEY=your-google-gemini-ai-api-key
 python manage.py makemigrations
 python manage.py migrate
 ```
+### 6. Create Admin user for Database overview
+```bash
+python manage.py createsuperuser # and follow the instructions.
+```
 
-### 6. Start the Development Server
+### 7. Start the Development Server
 ```bash
 python manage.py runserver
 ```
 
-### 7. Create Admin user for Database overview
-```bash
-python manage.py createsuperuser # and follow the instructions.
-```
 
 The application will be available at `http://127.0.0.1:8000`
 
