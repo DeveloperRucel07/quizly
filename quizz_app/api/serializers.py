@@ -12,6 +12,13 @@ class QuestionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
     
     def validate_question_options(self, value):
+        '''
+        Validate that question_options is a list of exactly 4 options.
+        
+        :param self: Descript the instance of the class
+        :param value: Description of the value being validated
+        :return: Validated value
+        '''
         if not isinstance(value, list):
             raise serializers.ValidationError('question_options must be a list.')
         if len(value) != 4:
@@ -53,6 +60,14 @@ class QuizDetailSerializer(serializers.ModelSerializer):
 
     
     def update(self, instance, validated_data):
+        '''
+        Update quiz title and description only.
+        
+        :param self: Descript the instance of the class
+        :param instance: Descript the Quiz instance to update
+        :param validated_data: Describe the validated data from the serializer
+        :return: Updated Quiz instance
+        '''
         instance.title = validated_data.get('title', instance.title)
         instance.description = validated_data.get('description', instance.description)
         instance.save()
@@ -70,6 +85,13 @@ class QuizAIGenerateCreateSerializer(serializers.Serializer):
         fields = ['url']
         
     def create(self, validated_data):
+        '''
+        Create a quiz by generating it from a YouTube video URL.
+        
+        :param self: Descript the instance of the class
+        :param validated_data: Describe the validated data from the serializer
+        :return: Created Quiz instance
+        '''
         request = self.context['request']
         user = request.user
         video_url = validated_data['url']
