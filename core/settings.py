@@ -150,6 +150,12 @@ YDL_OPTS = {
     'format': 'bestaudio/best',
     'quiet': True,
     'noplaylist': True,
+    'writeautomaticsub': True,
+    'writesubtitles': True,
+    'subtitleslangs': ['en'],
+    'subtitlesformat': 'vtt',
+    'skip_download': True,
+    'outtmpl': 'media/subtitles/%(id)s.%(ext)s',
 }
 
 CORS_ALLOWED_ORIGINS = [
