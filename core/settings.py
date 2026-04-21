@@ -16,19 +16,21 @@ from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEBUG = True
 
 
 load_dotenv(BASE_DIR / '.env')
 
+DEBUG = os.getenv('DEBUG') 
 SECRET_KEY = os.getenv('SECRET_KEY')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'https://quizly.api.rucel-tsafack.de',
+    'http://127.0.0.1:8000',
+    'https://quizly.rucel-tsafack.de',
+]
 
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -153,6 +155,7 @@ YDL_OPTS = {
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
+    'https://quizly.rucel-tsafack.de',
 
 ]
 
