@@ -6,9 +6,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from auth_app.api.authentication import CookieJWTAuthentication
 from auth_app.api.serializers import  RegistrationSerializer, CustomTokenObtainPairSerializer, UserSerializer
+from core.throttling import AuthBurstThrottle, UserStandardThrottle
 
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthBurstThrottle]
     def post(self, request):
         '''User registration View
 
@@ -35,6 +37,7 @@ class RegistrationView(APIView):
 
 class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [AuthBurstThrottle]
     def post(self, request, *args, **kwargs):
         '''Override the post method to set the JWT token in an HttpOnly cookie.
         Args:
@@ -72,6 +75,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
 class CookieTokenRefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthBurstThrottle]
     def post(self, request, *args, **kwargs):
         '''Override the post method to refresh the JWT token from HttpOnly cookie.
 
@@ -108,7 +112,8 @@ class CookieTokenRefreshView(TokenRefreshView):
 class LogoutView(APIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+    throttle_classes = [UserStandardThrottle]
+
     def post(self, request):
         '''User logout View
 

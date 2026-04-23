@@ -7,14 +7,16 @@ from auth_app.api.authentication import CookieJWTAuthentication
 from quizz_app.api.serializers import QuizAIGenerateCreateSerializer, QuizSerializer, QuizDetailSerializer
 from quizz_app.models import Quiz
 from quizz_app.api.permissions import IsOwner
+from core.throttling import AIGenerationThrottle, UserStandardThrottle
 
 
 class QuizGenerateAPIView(APIView):
-    ''' 
+    '''
     View to generate a quiz using AI based on a YouTube video URL.
     '''
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIGenerationThrottle]
     def post(self, request):
         '''
         Generate a quiz from a YouTube video URL.
@@ -39,6 +41,7 @@ class QuizListView(generics.ListAPIView):
     '''
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserStandardThrottle]
     serializer_class = QuizSerializer
 
     def get_queryset(self):
@@ -55,3 +58,4 @@ class QuizRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Quiz.objects.prefetch_related('questions').all()
     serializer_class = QuizDetailSerializer
     permission_classes = [IsAuthenticated, IsOwner]
+    throttle_classes = [UserStandardThrottle]
