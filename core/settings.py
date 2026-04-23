@@ -27,7 +27,7 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 ALLOWED_HOSTS = [
     'quizly.api.rucel-tsafack.de',
-    '127.0.0.1:8000',
+    '127.0.0.1',
     'quizly.rucel-tsafack.de',
 ]
 

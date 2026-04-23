@@ -12,6 +12,23 @@ from quizz_app.models import Question
 gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 
+def cleanup_media(file_path):
+    """
+    Remove the downloaded audio file, any sibling files (e.g. original .webm/.m4a),
+    and the parent quiz folder to free disk space.
+    """
+    try:
+        if file_path:
+            folder = os.path.dirname(file_path)
+            # Delete every file inside the quiz folder
+            if folder and os.path.isdir(folder):
+                for f in os.listdir(folder):
+                    os.remove(os.path.join(folder, f))
+                os.rmdir(folder)
+    except Exception:
+        pass
+
+
 def get_prompt(transcript_text):
         prompt = f'''
         Create a quiz based on the following video transcript.
@@ -60,21 +77,46 @@ def check_content_formatting(quiz_content):
         else:
             raise ValueError('Gemini output was not valid JSON.')
         
+        
 def download_audio_from_url(url, quiz_id):
-    
     if not url:
         return {'success': False, 'error': 'The Video URl where not provided.'}
-    
-    ydl_opts = YDL_OPTS.copy()
-    ydl_opts['outtmpl'] = f'media/quiz_{quiz_id}/%(id)s.%(ext)s'
+
+    outtmpl = f'media/quiz_{quiz_id}/%(id)s.%(ext)s'
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': outtmpl,
+        'quiet': True,
+        'noplaylist': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android'],
+                'player_skip': ['webpage', 'configs', 'js'],
+            }
+        },
+        'headers': {
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        },
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=True)
             audio_file_path = ydl.prepare_filename(info_dict)
+            base, _ = os.path.splitext(audio_file_path)
+            mp3_path = base + '.mp3'
+            if os.path.exists(mp3_path):
+                audio_file_path = mp3_path
         return {'success': True, 'file_path': audio_file_path, 'title': info_dict.get('title', 'Unknow Title')}
-    except Exception:
-        return {'success': False, 'error': 'Failed to download audio from the provided URL.'}
-    
+    except Exception as e:
+        return {'success': False, 'error': f'Failed to download audio from the provided URL: {str(e)}'}
+
+
+
 def transcription_with_whisper(audio_file_path) :
     '''
     Transcribe an audio file using OpenAI Whisper.
@@ -125,8 +167,8 @@ def generate_quizes_using_genmini_ai(transcript_text):
             contents =  get_prompt(safe_transcript)
         )
         quiz_content = response.text.strip()
-        check_content_formatting(quiz_content)
-        return {'success': True, 'quiz_content': check_content_formatting(quiz_content)}
+        formatted_quiz = check_content_formatting(quiz_content)
+        return {'success': True, 'quiz_content': formatted_quiz}
     except Exception as e:
         return {'title': 'AI error', 'description':f'Something when wrong during the quiz generation: {str(e)}', 'questions': []}  
     
@@ -143,14 +185,18 @@ def generate_quizzes_from_video(quiz):
         return {'success': False, 'error': result['error'], 'questions': []}
     audio_file_path = result['file_path']
     transcription_result = transcription_with_whisper(audio_file_path)
+    cleanup_media(audio_file_path)
     if not transcription_result['success']:
         return {'success': False, 'error': transcription_result['error'], 'questions': []}
     transcript_text = transcription_result['transcript']
-    quiz_data = generate_quizes_using_genmini_ai(transcript_text)
+    quiz_res = generate_quizes_using_genmini_ai(transcript_text)
+    if not quiz_res.get('success'):
+        return {'success': False, 'error': quiz_res.get('description', 'AI quiz generation failed.'), 'questions': []}
+    quiz_data = quiz_res.get('quiz_content', {})
     quiz.title = quiz_data.get('title', 'Generated Quiz')
     quiz.description = quiz_data.get('description', '')
     quiz.save()
-    
+
     for question_data in quiz_data.get('questions', []):
         question = Question(
             quiz=quiz,
@@ -173,12 +219,14 @@ def generate_quiz_from_youtube(video_url: str, quiz_id=None) -> dict:
     print("Audio downloaded to:", download)
 
     transcript_res = transcription_with_whisper(download['file_path'])
+    cleanup_media(download['file_path'])
     if not transcript_res['success']:
         return transcript_res
 
     quiz_res = generate_quizes_using_genmini_ai(transcript_res['transcript'])
+    if not quiz_res.get('success'):
+        return {'success': False, 'error': quiz_res.get('description', 'AI quiz generation failed.')}
     quiz_data = quiz_res.get('quiz_content')
-    print(quiz_data)
 
     return {
         'success': True,
